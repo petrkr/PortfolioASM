@@ -98,6 +98,8 @@ get_dosclk  endp
 
 disp_dosclk proc    near
             push dx
+            push bx
+
             mov bl, 10          ; Divide by 10
             div bl              ; Divide, results to ax
 
@@ -112,6 +114,7 @@ disp_dosclk proc    near
             mov  dl, dh         ; Display number
             int  21h
 
+            pop bx
             pop dx
             ret
 disp_dosclk  endp
@@ -124,11 +127,20 @@ get_rtc     proc    near
 
             ; RTC starts here
             mov     bx, 1FFFh
-		    mov		dl, [bx] ; copy BCD code
+		    mov     al, [bx] ; copy BCD code
+            mov     bl, al
 
-            mov  al, 00h
-            mov  ah, 02h
-            int  21h
+            and     al, 0f0h
+            rcr     al, 4
+
+            and     bl, 0fh
+
+            mov     ah, 0
+
+            call disp_dosclk
+
+            mov al, bl
+            call disp_dosclk
 
             pop ds
             ret
@@ -137,8 +149,6 @@ get_rtc     endp
 ; Convert BCD to Binary AH input, AL Output
 bcd_conv    proc    near
             push bx
-            inc     bx
-
             push cx
 
             mov bh, ah       ; Copy BCD to BH
